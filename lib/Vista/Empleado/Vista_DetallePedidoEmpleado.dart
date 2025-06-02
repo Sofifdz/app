@@ -1,14 +1,15 @@
 import 'package:app/Controlador/Pedidos.dart';
 import 'package:app/Vista/Administrador/Vista_Pedidos.dart';
+import 'package:app/Vista/Empleado/Vista_PedidosEmpleado.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class VistaDetallespedido extends StatefulWidget {
+class VistaDetallespedidoEmpleado extends StatefulWidget {
+  final String pedidoId;
   final String usuarioId;
   final String username;
-  final String pedidoId;
-  const VistaDetallespedido({
+  const VistaDetallespedidoEmpleado({
     super.key,
     required this.pedidoId,
     required this.usuarioId,
@@ -16,20 +17,40 @@ class VistaDetallespedido extends StatefulWidget {
   });
 
   @override
-  State<VistaDetallespedido> createState() => _VistaDetallespedidoState();
+  State<VistaDetallespedidoEmpleado> createState() =>
+      _VistaDetallespedidoEmpleadoState();
 }
 
-class _VistaDetallespedidoState extends State<VistaDetallespedido> {
+class _VistaDetallespedidoEmpleadoState
+    extends State<VistaDetallespedidoEmpleado> {
   List<Pedidos> pedidosList = [];
   void pedidos() {
     setState(() {});
+  }
+
+  void entregarPedido() {
+    FirebaseFirestore.instance
+        .collection('pedidos')
+        .doc(widget.pedidoId)
+        .update({
+      'isEntregado': true,
+    }).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Pedido entregado exitosamente")),
+      );
+      Navigator.pop(context);
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al entregar el pedido: $error")),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(160, 133, 203, 144),
+        backgroundColor: const Color.fromARGB(255, 209, 219, 250),
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_rounded,
@@ -40,13 +61,46 @@ class _VistaDetallespedidoState extends State<VistaDetallespedido> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => VistaPedidos(
+                  builder: (context) => VistaPedidosEmpleado(
                         usuarioId: widget.usuarioId,
                         username: widget.username,
                       )),
             );
           },
         ),
+        title: Center(
+          child: Text(
+            "Detalles",
+            style: GoogleFonts.montserrat(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: const Color.fromARGB(255, 81, 81, 81)),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor:
+                  MaterialStateProperty.all(Color.fromARGB(255, 168, 209, 172)),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            onPressed: () {
+              entregarPedido();
+            },
+            child: Text(
+              'Entregar',
+              style: GoogleFonts.montserrat(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          )
+        ],
       ),
       body: cuerpo(context),
     );

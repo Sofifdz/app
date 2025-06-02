@@ -1,10 +1,10 @@
 import 'package:app/Vista/Administrador/vistaAdmin.dart';
-import 'package:app/Vista/Empleado/vistaempleado.dart';
-import 'package:app/Vista/Singup.dart';
+import 'package:app/Vista/Componentes/ShowDialogCaja.dart';
+import 'package:app/Vista/Empleado/Vista_Ventas.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -17,49 +17,69 @@ class _LoginState extends State<Login> {
   final _emailcontroller = TextEditingController();
   final _passwordcontroller = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+
 
   bool isVisible = false;
 
   final formKey = GlobalKey<FormState>();
 
   Future<void> _login() async {
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailcontroller.text,
-        password: _passwordcontroller.text,
-      );
+    final String email = _emailcontroller.text.trim();
+    final String password = _passwordcontroller.text;
 
-      final User? user = userCredential.user;
-      final DocumentSnapshot userDoc =
-          await _firestore.collection('users').doc(user!.uid).get();
+    try {
+      final QuerySnapshot querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .where('password', isEqualTo: password)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Usuario o contraseña incorrectos")),
+        );
+        return;
+      }
+
+      final userDoc = querySnapshot.docs.first;
       final role = userDoc['role'];
+      final username = userDoc['username'];
+      final userId = userDoc.id;
 
       if (mounted) {
         if (role == 'Administrador') {
           Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => Vistaadmin()));
+            context,
+            MaterialPageRoute(builder: (context) => Vistaadmin(
+              username: userId,
+              usuarioId: userId,
+            )),
+          );
         } else if (role == 'Empleado') {
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => vistaempleado()));
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => VistaVentas(
+                      usuarioId: userId,
+                      username: userDoc['username'],
+                    )),
+          );
+
+          ShowDialogCaja.show(
+            context: context,
+            usuarioId: userId,
+            username: username,
+            abroOcierro: 'Abro con',
+            txtBoton: 'Comenzar',
+            tipoOperacion: "abrir",
+          );
         }
       }
-    } on FirebaseAuthException catch (e) {
-      print('Código de error: ${e.code}'); 
-
-      String errorMessage;
-      switch (e.code) {
-        case 'invalid-credential': //esto en especifico por que firebase a veces no devuelve muy bien el error
-          errorMessage = 'La contraseña es incorrecta o el usuario no existe.';
-          break;
-        default:
-          errorMessage =
-              'Error: ${e.message}';
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(errorMessage),
-      ));
+    } catch (e) {
+      print("Error al iniciar sesión: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     }
   }
 
@@ -70,7 +90,8 @@ class _LoginState extends State<Login> {
         child: Column(
           children: [
             Padding(
-              //padding: const EdgeInsets.all(40.0),
+          
+          
               padding: const EdgeInsets.fromLTRB(40.0, 150.0, 40.0, 40.0),
               child: Container(
                 height: 600,
@@ -104,13 +125,11 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Usuario
                       txt(context, "Correo"),
                       const SizedBox(height: 5),
                       txtField(context, _emailcontroller, Icon(Icons.mail),
                           null, false),
                       const SizedBox(height: 20),
-
                       txt(context, "Contraseña"),
                       const SizedBox(height: 5),
                       txtField(
@@ -140,8 +159,31 @@ class _LoginState extends State<Login> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: () {
-                              _login();
+                            onPressed: () async {
+                              await _login();
+
+                              /*User? user = FirebaseAuth.instance.currentUser;
+
+                              if (user != null) {
+                                // Obtener los datos del usuario desde Firestore
+                                DocumentSnapshot userDoc =
+                                    await FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(user.uid)
+                                        .get();
+
+                                if (userDoc.exists) {
+                                  String usuarioId = user.uid;
+                                  String username =
+                                      userDoc['username'] ?? 'Usuario';
+
+                                  AperturaCajaDialog.show(
+                                    context: context,
+                                    usuarioId: usuarioId,
+                                    username: username,
+                                  );
+                                }
+                              }*/
                             },
                             child: Text(
                               "Iniciar",
@@ -154,7 +196,7 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                       ),
-                      Text("crear cuenta"),
+                      /*Text("crear cuenta"),
                       TextButton(
                           onPressed: () {
                             Navigator.push(
@@ -162,7 +204,7 @@ class _LoginState extends State<Login> {
                                 MaterialPageRoute(
                                     builder: (context) => SignUpPrueba()));
                           },
-                          child: const Text("Crear cuenta"))
+                          child: const Text("Crear cuenta"))*/
                     ],
                   ),
                 ),

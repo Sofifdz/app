@@ -3,7 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Vistaadmin extends StatefulWidget {
-  const Vistaadmin({super.key});
+  final String usuarioId;
+  final String username;
+  const Vistaadmin({
+    super.key,
+    required this.usuarioId,
+    required this.username,
+  });
 
   @override
   State<Vistaadmin> createState() => _VistaadminState();
@@ -38,7 +44,7 @@ class _VistaadminState extends State<Vistaadmin> {
             ),
           ),
         ),
-        drawer: DrawerConfig.administradorDrawer(context)
-        );
+        drawer: DrawerConfig.administradorDrawer(
+            context, widget.usuarioId, widget.username));
   }
 }

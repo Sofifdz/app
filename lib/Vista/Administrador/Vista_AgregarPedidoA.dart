@@ -6,20 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:board_datetime_picker/board_datetime_picker.dart';
 
-class VistaAgregarpedido extends StatefulWidget {
+class Vista_AgregarPedidoA extends StatefulWidget {
   final String usuarioId;
   final String username;
-  const VistaAgregarpedido({
+  const Vista_AgregarPedidoA({
     super.key,
     required this.usuarioId,
     required this.username,
   });
 
   @override
-  State<VistaAgregarpedido> createState() => _VistaAgregarpedidoState();
+  State<Vista_AgregarPedidoA> createState() => _Vista_AgregarPedidoAState();
 }
 
-class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
+class _Vista_AgregarPedidoAState extends State<Vista_AgregarPedidoA> {
   final NoPedidoController = TextEditingController();
   final clienteController = TextEditingController();
   final descripcionController = TextEditingController();
@@ -66,7 +66,7 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 209, 219, 250),
+        backgroundColor: const Color.fromARGB(160, 133, 203, 144),
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_rounded,
@@ -77,7 +77,7 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => VistaPedidosEmpleado(
+                  builder: (context) => VistaPedidos(
                         usuarioId: widget.usuarioId,
                         username: widget.username,
                       )),
@@ -106,7 +106,7 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
                   Container(
                     height: 65,
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 209, 219, 250),
+                      color: const Color.fromARGB(160, 133, 203, 144),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -126,6 +126,30 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
                               initialDate: date,
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2101),
+                              builder: (BuildContext context, Widget? child) {
+                                return Theme(
+                                  data: ThemeData.light().copyWith(
+                                    colorScheme: ColorScheme.light(
+                                      primary: Colors
+                                          .green, // color de encabezado y selección
+                                      onPrimary: Colors
+                                          .white, // texto sobre color primario
+                                      onSurface: Colors.black, // texto normal
+                                    ),
+                                    dialogBackgroundColor:
+                                        Color.fromARGB(255, 240, 240, 240),
+                                    textButtonTheme: TextButtonThemeData(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors
+                                            .black, // color de texto en los botones
+                                        textStyle: GoogleFonts.montserrat(
+                                            fontSize: 16),
+                                      ),
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
                             );
 
                             if (selectedDate != null && selectedDate != date) {
@@ -133,6 +157,30 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
                                 context: context,
                                 initialTime: TimeOfDay(
                                     hour: date.hour, minute: date.minute),
+                                builder: (BuildContext context, Widget? child) {
+                                  return Theme(
+                                    data: ThemeData.light().copyWith(
+                                      colorScheme: ColorScheme.light(
+                                        primary: Colors
+                                            .green, // color de encabezado y selección
+                                        onPrimary: Colors
+                                            .white, // texto sobre color primario
+                                        onSurface: Colors.black, // texto normal
+                                      ),
+                                      dialogBackgroundColor:
+                                          Color.fromARGB(255, 240, 240, 240),
+                                      textButtonTheme: TextButtonThemeData(
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: Colors
+                                              .black, // color de texto en los botones
+                                          textStyle: GoogleFonts.montserrat(
+                                              fontSize: 16),
+                                        ),
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
                               );
 
                               if (selectedTime != null) {

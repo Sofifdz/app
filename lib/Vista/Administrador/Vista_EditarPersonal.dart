@@ -3,15 +3,19 @@ import 'package:app/Vista/Administrador/Vista_Personal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
- 
+
 class VistaEditarpersonal extends StatefulWidget {
   final Usuarios user;
+  final String usuarioId;
+  final String username;
   final Future<void> Function(Usuarios) updateUser;
 
   const VistaEditarpersonal({
     Key? key,
     required this.user,
     required this.updateUser,
+    required this.usuarioId,
+    required this.username,
   }) : super(key: key);
 
   @override
@@ -39,7 +43,7 @@ class _VistaEditarpersonalState extends State<VistaEditarpersonal> {
     _selectedValue = widget.user.role;
   }
 
-   Future<void> _updateUser() async {
+  Future<void> _updateUser() async {
     if (formKey.currentState!.validate()) {
       try {
         await FirebaseFirestore.instance
@@ -65,7 +69,6 @@ class _VistaEditarpersonalState extends State<VistaEditarpersonal> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,7 +84,10 @@ class _VistaEditarpersonalState extends State<VistaEditarpersonal> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => VistaPersonal()),
+                  builder: (context) => VistaPersonal(
+                        usuarioId: widget.usuarioId,
+                        username: widget.username,
+                      )),
             );
           },
         ),
@@ -198,7 +204,7 @@ class _VistaEditarpersonalState extends State<VistaEditarpersonal> {
     );
   }
 
-    Widget Editar(BuildContext context) {
+  Widget Editar(BuildContext context) {
     return IconButton(
       onPressed: () async {
         if (formKey.currentState!.validate()) {

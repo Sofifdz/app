@@ -1,17 +1,21 @@
 import 'package:app/Controlador/Productos.dart';
 import 'package:app/Controlador/ServiciosFirebase.dart';
 import 'package:app/Vista/Administrador/Vista_AgregarProducto.dart';
-import 'package:app/Vista/Administrador/Vista_EditarPersonal.dart';
 import 'package:app/Vista/Administrador/Vista_EditarProducto.dart';
 import 'package:app/Vista/Componentes/Component_Filtre.dart';
-import 'package:app/Vista/Componentes/Component_ShowDeteleDialog.dart';
 import 'package:app/Vista/Componentes/DrawerConfig.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class VistaAlmacen extends StatefulWidget {
-  const VistaAlmacen({super.key});
+  final String usuarioId;
+  final String username;
+  const VistaAlmacen({
+    super.key,
+    required this.usuarioId,
+    required this.username,
+  });
 
   @override
   State<VistaAlmacen> createState() => _VistaAlmacenState();
@@ -19,72 +23,65 @@ class VistaAlmacen extends StatefulWidget {
 
 class _VistaAlmacenState extends State<VistaAlmacen> {
   TextEditingController _searchController = TextEditingController();
+  String query = '';
+  String _currentFilter = '';
 
-  List<DocumentSnapshot> _searchResults = [];
-
-  int expandedIndex = -1;
-
-  List _allResults = [];
-  List _resultList = [];
-  getProductStream() async {
-    var data = await FirebaseFirestore.instance
-        .collection('productos')
-        .orderBy('productoname')
-        .get();
-    
-    print('Productos recuperados: ${data.docs.length}'); 
-
-    setState(() {
-      _allResults = data.docs;
-    });
-    searchResultList();
-  }
+  List<Productos> productosList = [];
+  List<Productos> allProducts = [];
 
   @override
   void initState() {
     super.initState();
-    getProductStream();
-    _searchController.addListener(_onSearchChanged);
-  }
-
-  _onSearchChanged() {
-    print(_searchController.text);
-    searchResultList();
-  }
-
-  searchResultList() {
-    var showResults = [];
-
-    if (_searchController.text.trim().isNotEmpty) {
-      for (var productSnapShot in _allResults) {
-        var name = productSnapShot['productoname'].toString().toLowerCase();
-        if (name.contains(_searchController.text.toLowerCase())) {
-          showResults.add(productSnapShot);
-        }
-      }
-    } else {
-      showResults = List.from(_allResults);
-    }
-    print('Resultados de la búsqueda: ${showResults.length}');
-    setState(() {
-      _resultList = showResults;
+    _searchController.addListener(() {
+      setState(() {
+        query = _searchController.text.toLowerCase();
+      });
     });
+    _loadProductos();
   }
 
-  void dispose() {
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
-    super.dispose();
-  }
+  Future<void> _loadProductos() async {
+    QuerySnapshot querySnapshot =
+        await FirebaseFirestore.instance.collection('productos').get();
 
-  @override
-  void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
+    List<Productos> productos =
+        querySnapshot.docs.map((doc) => Productos.fromFirestore(doc)).toList();
+
+    setState(() {
+      productosList = productos;
+      allProducts = productos;
+    });
   }
 
   void productos() {
     setState(() {});
+  }
+
+  void _applyFilter(String? filter) {
+    setState(() {
+      _currentFilter = filter ?? '';
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => Component_Filtre(
+        onFilterChanged: (String filter) {
+          _applyFilter(filter);
+        },
+      ),
+    );
   }
 
   @override
@@ -123,7 +120,8 @@ class _VistaAlmacenState extends State<VistaAlmacen> {
           ),
         ),
       ),
-      drawer: DrawerConfig.administradorDrawer(context),
+      drawer: DrawerConfig.administradorDrawer(
+          context, widget.usuarioId, widget.username),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -144,38 +142,22 @@ class _VistaAlmacenState extends State<VistaAlmacen> {
                           ? IconButton(
                               icon: const Icon(Icons.clear),
                               onPressed: () {
-                                 setState(() {
-                                  _searchController.clear();
-                                  searchResultList();
-                                });
+                                _searchController.clear();
                               },
                             )
                           : null,
                     ),
-                    //onChanged: _query,
                   ),
                 ),
                 IconButton(
-                  onPressed: () {
-                    /* showModalBottomSheet(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return Component_Filtre(
-                          onFilterChanged:
-                              _applyFilter, // Recibe (orderBy, descending)
-                        );
-                      },
-                    );*/
-                  },
+                  onPressed: _showFilterSheet,
                   icon: Icon(Icons.filter_alt,
                       size: 35, color: const Color.fromARGB(255, 81, 81, 81)),
                 ),
               ],
             ),
-            SizedBox(
-              height: 15,
-            ),
-            body(context)
+            SizedBox(height: 15),
+            Expanded(child: body(context)),
           ],
         ),
       ),
@@ -197,149 +179,141 @@ class _VistaAlmacenState extends State<VistaAlmacen> {
             ),
           );
         }
-        print('productos: ${snapshot.data!.docs.length}');
 
-        final productosList = snapshot.data!.docs
+        List<Productos> productosList = snapshot.data!.docs
             .map((doc) => Productos.fromFirestore(doc))
+            .where((producto) =>
+                producto.productoname.toLowerCase().contains(query))
             .toList();
+        switch (_currentFilter) {
+          case 'precio_asc':
+            productosList.sort((a, b) => a.precio.compareTo(b.precio));
+            break;
+          case 'precio_desc':
+            productosList.sort((a, b) => b.precio.compareTo(a.precio));
+            break;
+          case 'existencias_asc':
+            productosList
+                .sort((a, b) => a.existencias.compareTo(b.existencias));
+            break;
+          case 'existencias_desc':
+            productosList
+                .sort((a, b) => b.existencias.compareTo(a.existencias));
+            break;
+          case 'nombre_asc':
+            productosList
+                .sort((a, b) => a.productoname.compareTo(b.productoname));
+            break;
+        }
 
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: ListView.builder(
-              itemCount: productosList.length,
-              itemBuilder: (context, index) {
-                final producto = productosList[index];
-
-                return Dismissible(
-                  key: Key(producto.id),
-                  direction: DismissDirection.endToStart,
-                  confirmDismiss: (direction) async {
-                    return await DeleteDialogProducts.showDeleteDialog(
-                      item: producto,
-                      context: context,
-                      itemName: producto.productoname,
-                      onDelete: productos,
-                    );
-                  },
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  child: Card(
-                    color: _obtenerColor(producto.existencias),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => VistaEditarproducto(
-                              producto: producto,
-                              updateProduct: (Productos updateProduct) async {
-                                // esto me actualiza el usuario en Firestore
-                                await FirebaseFirestore.instance
-                                    .collection('productos')
-                                    .doc(updateProduct.id)
-                                    .update(updateProduct.toFirestore());
-                              },
-                            ),
-                          ),
-                        ).then((_) => productos());
-                      },
-                      child: Column(
-                        children: [
-                          SizedBox(
-                              height: 100,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  Expanded(
-                                      child: Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Producto',
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 22,
-                                            color: const Color.fromARGB(
-                                                255, 81, 81, 81),
-                                          ),
-                                        ),
-                                        Text(
-                                          producto.productoname,
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            color: const Color.fromARGB(
-                                                255, 81, 81, 81),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  )),
-                                  Expanded(
-                                      child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Existencias',
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 22,
-                                          color: const Color.fromARGB(
-                                              255, 81, 81, 81),
-                                        ),
-                                      ),
-                                      Text(
-                                        producto.existencias.toString(),
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color.fromARGB(
-                                              255, 81, 81, 81),
-                                        ),
-                                      )
-                                    ],
-                                  )),
-                                  Expanded(
-                                      child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Precio',
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 22,
-                                          color: const Color.fromARGB(
-                                              255, 81, 81, 81),
-                                        ),
-                                      ),
-                                      Text(
-                                        '\$${producto.precio.toString()}',
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color.fromARGB(
-                                              255, 81, 81, 81),
-                                        ),
-                                      )
-                                    ],
-                                  ))
-                                ],
-                              )),
-                        ],
-                      ),
-                    ),
-                  ),
+        return ListView.builder(
+          itemCount: productosList.length,
+          itemBuilder: (context, index) {
+            final producto = productosList[index];
+            return Dismissible(
+              key: Key(producto.id),
+              direction: DismissDirection.endToStart,
+              confirmDismiss: (direction) async {
+                return await DeleteDialogProducts.showDeleteDialog(
+                  item: producto,
+                  context: context,
+                  itemName: producto.productoname,
+                  onDelete: productos,
                 );
               },
-            ),
-          ),
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerRight,
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
+              child: Card(
+                color: _obtenerColor(producto.existencias),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VistaEditarproducto(
+                          producto: producto,
+                          usuarioId: widget.usuarioId, 
+                          username: widget.username,
+                          updateProduct: (Productos updateProduct) async {
+                            await FirebaseFirestore.instance
+                                .collection('productos')
+                                .doc(updateProduct.id)
+                                .update(updateProduct.toFirestore());
+                          },
+                        ),
+                      ),
+                    ).then((_) => productos());
+                  },
+                  child: SizedBox(
+                    height: 100,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('Producto',
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 22,
+                                        color:
+                                            Color.fromARGB(255, 81, 81, 81))),
+                                Text(producto.productoname,
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            Color.fromARGB(255, 81, 81, 81))),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Existencias',
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 22,
+                                      color: Color.fromARGB(255, 81, 81, 81))),
+                              Text(producto.existencias.toString(),
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color.fromARGB(255, 81, 81, 81))),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Precio',
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 22,
+                                      color: Color.fromARGB(255, 81, 81, 81))),
+                              Text('\$${producto.precio}',
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color.fromARGB(255, 81, 81, 81))),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -388,7 +362,6 @@ class DeleteDialogProducts {
                 onPressed: () async {
                   await ServiciosFirebaseProductos.deleteProduct(
                       item.id, onDelete);
-
                   Navigator.pop(context);
                 },
                 child: Text(

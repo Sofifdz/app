@@ -5,8 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Vista_AgregarPersonal extends StatefulWidget {
+  final String usuarioId;
+  final String username;
   const Vista_AgregarPersonal({
     super.key,
+    required this.usuarioId,
+    required this.username,
   });
 
   @override
@@ -25,30 +29,40 @@ class _Vista_AgregarPersonalState extends State<Vista_AgregarPersonal> {
   bool isVisible = false;
 
   String? _selectedValue = "Empleado";
-  
+
   Future<void> _register() async {
     try {
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: passwordController.text,
-      );
+      // Verificamos si ya existe un usuario con ese email
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: _emailController.text)
+          .get();
 
-      // me guarda los datos en Firestore
-      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+      if (querySnapshot.docs.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('El correo ya está registrado')),
+        );
+        return;
+      }
+
+      // Guardamos usuario directamente en Firestore
+      await _firestore.collection('users').add({
         'email': _emailController.text,
         'username': usernameController.text,
-        'role': _selectedValue,
-        'password': passwordController.text
+        'password': passwordController.text,
+        'role': _selectedValue
       });
 
-      // Navegar a la pantalla de login
-      Navigator.pop(context);
-    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registro exitoso')),
+      );
+
+      Navigator.pop(context); // o navegar al login
+    } catch (e) {
       print('Error al registrarse: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Error: ${e.message}'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al registrar')),
+      );
     }
   }
 
@@ -66,13 +80,20 @@ class _Vista_AgregarPersonalState extends State<Vista_AgregarPersonal> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => VistaPersonal()),
+              MaterialPageRoute(
+                  builder: (context) => VistaPersonal(
+                        usuarioId: widget.usuarioId,
+                        username: widget.username,
+                      )),
             );
           },
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.save, color: Color.fromARGB(255, 81, 81, 81),),
+            icon: Icon(
+              Icons.save,
+              color: Color.fromARGB(255, 81, 81, 81),
+            ),
             onPressed:
                 _register, // Llamada correcta a la función sin paréntesis
           ),
@@ -187,6 +208,4 @@ class _Vista_AgregarPersonalState extends State<Vista_AgregarPersonal> {
       ),
     );
   }
-
-  
 }

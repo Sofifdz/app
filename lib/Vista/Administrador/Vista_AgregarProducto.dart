@@ -1,4 +1,5 @@
 import 'package:app/Controlador/Productos.dart';
+import 'package:app/Controlador/ServiciosFirebase.dart';
 import 'package:app/Vista/Administrador/Vista_Almacen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,18 +13,41 @@ class VistaAgregarproducto extends StatefulWidget {
 }
 
 class _VistaAgregarproductoState extends State<VistaAgregarproducto> {
+  String usuarioId = ''; // Variable para el usuario ID
+  String username = ''; // Variable para el nombre de usuario
   final formKey = GlobalKey<FormState>();
 
   final idcontroller = TextEditingController();
   final productonameController = TextEditingController();
   final existenciaController = TextEditingController();
   final priceController = TextEditingController();
+  void initState() {
+    super.initState();
+    obtenerUsername(); // Fetch username
+    obtenerUsuarioId(); // Fetch usuarioId
+  }
+
+  void obtenerUsername() async {
+    String nombre = await ServiciosFirebasePersonal.getUsername(usuarioId);
+
+    setState(() {
+      username = nombre;
+    });
+  }
+
+  void obtenerUsuarioId() async {
+    String id = await ServiciosFirebasePersonal
+        .getUsuarioId(); // Asegúrate de que este método exista
+    setState(() {
+      usuarioId = id;
+    });
+  }
 
   Future<void> registrerProducto() async {
     try {
       await FirebaseFirestore.instance
           .collection('productos')
-          .doc(idcontroller.text) 
+          .doc(idcontroller.text)
           .set({
         'id': idcontroller.text,
         'productoname': productonameController.text,
@@ -54,7 +78,11 @@ class _VistaAgregarproductoState extends State<VistaAgregarproducto> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => VistaAlmacen()),
+              MaterialPageRoute(
+                  builder: (context) => VistaAlmacen(
+                        username: username,
+                        usuarioId: usuarioId,
+                      )),
             );
           },
         ),

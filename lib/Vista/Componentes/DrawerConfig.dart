@@ -1,19 +1,23 @@
 import 'package:app/Vista/Administrador/Vista_Almacen.dart';
 import 'package:app/Vista/Administrador/Vista_Pedidos.dart';
 import 'package:app/Vista/Administrador/Vista_Personal.dart';
-import 'package:app/Vista/Administrador/prueba_Vpedidos.dart';
 import 'package:app/Vista/Componentes/Component_Drawer.dart';
+import 'package:app/Vista/Componentes/ShowDialogCaja.dart';
+import 'package:app/Vista/Empleado/Vista_PedidosEmpleado.dart';
+import 'package:app/Vista/Empleado/Vista_Ventas.dart';
+import 'package:app/Vista/Empleado/Vista_VentasTurno.dart';
 import 'package:app/Vista/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class DrawerConfig {
-  
-  /// Drawer para Administradores
-  static ComponentDrawer administradorDrawer(BuildContext context) {
-    
+  // En el método administradorDrawer y empleadoDrawer
+  static ComponentDrawer administradorDrawer(
+      BuildContext context, String usuarioId, String username) {
     return ComponentDrawer(
+      usuarioId: usuarioId, // ← Nuevo campo que debes pasar
+      username: username,
+      colorr: Color.fromARGB(160, 133, 203, 144),
       items: ['Ventas', 'Almacen', 'Personal', 'Pedidos', 'Salir'],
       iconos: [
         Icons.shopping_basket,
@@ -23,27 +27,35 @@ class DrawerConfig {
         Icons.exit_to_app
       ],
       onTaps: [
+        // Asegúrate de que el username esté disponible al hacer clic
+        () {},
         () {
-        
-        },
-        () {
-         Navigator.push(
+          Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => VistaAlmacen()),
+            MaterialPageRoute(
+                builder: (context) =>
+                    VistaAlmacen(usuarioId: usuarioId, username: username)),
           );
         },
         () {
           Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => VistaPersonal(),
-          ));
+              context,
+              MaterialPageRoute(
+                builder: (context) => VistaPersonal(
+                  usuarioId: usuarioId,
+                  username: username,
+                ),
+              ));
         },
         () {
-         Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => VistaPedidos
-            (),
-          ));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VistaPedidos(
+                     usuarioId: usuarioId,
+      username: username,
+                ),
+              ));
         },
         () {
           _logOut(context);
@@ -53,8 +65,12 @@ class DrawerConfig {
     );
   }
 
-  static ComponentDrawer empleadoDrawer(BuildContext context) {
+  static ComponentDrawer empleadoDrawer(
+      BuildContext context, String usuarioId, String username) {
     return ComponentDrawer(
+      usuarioId: usuarioId, // ← Nuevo campo que debes pasar
+      username: username,
+      colorr: Color.fromARGB(255, 209, 219, 250),
       items: [
         'Nueva Venta',
         'Ventas del turno',
@@ -71,18 +87,35 @@ class DrawerConfig {
       ],
       onTaps: [
         () {
-          
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VistaVentas(
+                  usuarioId: usuarioId,
+                  username: username,
+                ),
+              ));
         },
         () {
-         
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => VistaVentasturno(
+                      usuarioId: usuarioId, username: username)));
         },
         () {
-          
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => VistaPedidosEmpleado(
+                        username: username,
+                        usuarioId: usuarioId,
+                      )));
         },
         () {
-          
+          corteDeCaja(context, usuarioId, username);
         },
-        (){
+        () {
           _logOut(context);
         },
       ],
@@ -90,19 +123,36 @@ class DrawerConfig {
     );
   }
 
-   static Future<void> _logOut(BuildContext context) async {
+  static Future<void> _logOut(BuildContext context) async {
     final FirebaseAuth _auth = FirebaseAuth.instance;
     try {
       await _auth.signOut();
       Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Login()),
-          );
+        context,
+        MaterialPageRoute(builder: (context) => Login()),
+      );
     } catch (e) {
       print('Error al cerrar sesión: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cerrar sesión: $e')),
       );
     }
+  }
+
+  static Future<void> corteDeCaja(
+      BuildContext context, String usuarioId, String username) async {
+    await ShowDialogCaja.show(
+      context: context,
+      usuarioId: usuarioId,
+      username: username,
+      abroOcierro: 'Cierro con',
+      txtBoton: 'Cerrar',
+      tipoOperacion: "cerrar",
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => Login()),
+    );
   }
 }

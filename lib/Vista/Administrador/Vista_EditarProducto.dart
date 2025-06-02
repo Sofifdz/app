@@ -6,9 +6,16 @@ import 'package:flutter/material.dart';
 class VistaEditarproducto extends StatefulWidget {
   final Productos producto;
   final Future<void> Function(Productos) updateProduct;
+  final String usuarioId;
+  final String username;
 
-  const VistaEditarproducto(
-      {super.key, required this.producto, required this.updateProduct});
+  const VistaEditarproducto({
+    super.key,
+    required this.producto,
+    required this.updateProduct,
+    required this.usuarioId,
+    required this.username,
+  });
 
   @override
   State<VistaEditarproducto> createState() => _VistaEditarproductoState();
@@ -72,7 +79,11 @@ class _VistaEditarproductoState extends State<VistaEditarproducto> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => VistaAlmacen()),
+                MaterialPageRoute(
+                    builder: (context) => VistaAlmacen(
+                          usuarioId: widget.usuarioId,
+                          username: widget.username,
+                        )),
               );
             },
           ),
@@ -184,11 +195,10 @@ class _VistaEditarproductoState extends State<VistaEditarproducto> {
       onPressed: () async {
         if (formKey.currentState!.validate()) {
           final editProduct = Productos(
-            id: widget.producto.id, // Se mantiene el mismo ID
-            productoname: productonameController.text,
-            precio: int.parse(precioController.text),
-            existencias: int.parse(existenciaController.text)
-          );
+              id: widget.producto.id, // Se mantiene el mismo ID
+              productoname: productonameController.text,
+              precio: int.parse(precioController.text),
+              existencias: int.parse(existenciaController.text));
           try {
             await widget.updateProduct(editProduct);
             ScaffoldMessenger.of(context).showSnackBar(

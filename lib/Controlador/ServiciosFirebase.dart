@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ServiciosFirebasePersonal {
-  //NO ME ELIMINA-CHECAR
+  // Método para eliminar un usuario de Firebase Authentication y Firestore
   static Future<void> deleteUser(
       String userId, VoidCallback onEmpleadosUpdate) async {
     try {
@@ -33,26 +33,38 @@ class ServiciosFirebasePersonal {
     }
   }
 
-  static Future<String> getUsername() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    String username = 'Usuario';
+  // Método para obtener el ID del usuario autenticado
+  static Future<String> getUsuarioId() async {
+    String usuarioId = '';
 
-    if (user != null) {
-      try {
-        DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+    try {
+      // Obtener el usuario autenticado actualmente
+      User? user = FirebaseAuth.instance.currentUser;
 
-        if (userSnapshot.exists) {
-          username = userSnapshot.get('username') ?? 'Usuario';
-        }
-      } catch (e) {
-        print("Error al obtener el usuario: $e");
+      if (user != null) {
+        // Si el usuario está autenticado, obtener el UID
+        usuarioId = user.uid;
       }
+    } catch (e) {
+      print("Error al obtener el usuario ID: $e");
     }
-    return username;
+
+    return usuarioId; // Devolver el ID del usuario o cadena vacía si no está autenticado
   }
+
+  // Método para obtener el nombre de usuario desde Firestore
+  static Future<String> getUsername(String userId) async {
+    if (userId.isEmpty) return ''; // ← protección contra ID vacío
+
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+      return userDoc.data()?['username'] ?? '';
+    }
+    return '';
+  }
+
+  
 }
 
 class ServiciosFirebaseProductos {
@@ -93,7 +105,8 @@ class ServiciosFirebaseProductos {
     }
   }
 }
-class serviciosPedidos{
+
+class serviciosPedidos {
   static Future<String> getPedido() async {
     User? pedido = FirebaseAuth.instance.currentUser;
     String pedidoo = 'Pedido';
@@ -115,3 +128,5 @@ class serviciosPedidos{
     return pedidoo;
   }
 }
+
+class ServiciosfirebaseVentas {}

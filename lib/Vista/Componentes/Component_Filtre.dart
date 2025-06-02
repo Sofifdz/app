@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Component_Filtre extends StatefulWidget {
-  final Function(String, bool)
-      onFilterChanged; // Modificado para recibir orden ascendente/descendente
+  final Function(String) onFilterChanged;
 
   const Component_Filtre({Key? key, required this.onFilterChanged})
       : super(key: key);
@@ -12,65 +11,73 @@ class Component_Filtre extends StatefulWidget {
 }
 
 class _Component_FiltreState extends State<Component_Filtre> {
-  String _selectedFilter = "nombre";
-  bool _descending = false; // Filtro en orden ascendente por defecto
+  String selectedFilter = '';
+
+  
+  void _applyFilter(String? filter) {
+    if (filter == null) return;
+    setState(() {
+      selectedFilter = filter;
+    });
+    widget.onFilterChanged(filter);
+    Navigator.pop(context); 
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: ListView(
+        shrinkWrap: true,
         children: [
-          const Text("Ordenar por:",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          ListTile(
-            title: const Text("Nombre"),
-            leading: Radio<String>(
-              value: "nombre",
-              groupValue: _selectedFilter,
-              onChanged: (value) {
-                setState(() => _selectedFilter = value!);
-              },
-            ),
+          ExpansionTile(
+            title: Text('Ordenar por precio'),
+            children: [
+              RadioListTile(
+                title: Text('Menor precio'),
+                value: 'precio_asc',
+                groupValue: selectedFilter,
+                onChanged: _applyFilter, 
+              ),
+              RadioListTile(
+                title: Text('Mayor precio'),
+                value: 'precio_desc',
+                groupValue: selectedFilter,
+                onChanged: _applyFilter,
+              ),
+            ],
           ),
-          ListTile(
-            title: const Text("Precio"),
-            leading: Radio<String>(
-              value: "precio",
-              groupValue: _selectedFilter,
-              onChanged: (value) {
-                setState(() => _selectedFilter = value!);
-              },
-            ),
+          ExpansionTile(
+            title: Text('Ordenar por existencias'),
+            children: [
+              RadioListTile(
+                title: Text('Menor existencia'),
+                value: 'existencias_asc',
+                groupValue: selectedFilter,
+                onChanged: _applyFilter,
+              ),
+              RadioListTile(
+                title: Text('Mayor existencia'),
+                value: 'existencias_desc',
+                groupValue: selectedFilter,
+                onChanged: _applyFilter,
+              ),
+            ],
           ),
-          ListTile(
-            title: const Text("Existencias"),
-            leading: Radio<String>(
-              value: "existencias",
-              groupValue: _selectedFilter,
-              onChanged: (value) {
-                setState(() => _selectedFilter = value!);
-              },
-            ),
-          ),
-          SwitchListTile(
-            title: const Text("Orden descendente"),
-            value: _descending,
-            onChanged: (value) {
-              setState(() => _descending = value);
-            },
-          ),
-          ElevatedButton(
-            onPressed: () {
-              widget.onFilterChanged(_selectedFilter, _descending);
-              Navigator.pop(context);
-            },
-            child: const Text("Aplicar Filtro"),
+          ExpansionTile(
+            title: Text('Ordenar por nombre'),
+            children: [
+              RadioListTile(
+                title: Text('Nombre'),
+                value: 'nombre_asc',
+                groupValue: selectedFilter,
+                onChanged: _applyFilter,
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 }
+

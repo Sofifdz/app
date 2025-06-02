@@ -1,3 +1,4 @@
+import 'package:app/Vista/Componentes/Component_ShowDeteleDialog.dart';
 import 'package:app/Vista/Login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,31 +24,30 @@ class _SignUpPruebaState extends State<SignUpPrueba> {
   String? _selectedValue = "Empleado";
 
   Future<void> _register() async {
-  try {
-    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-      email: _emailController.text,
-      password: passwordController.text,
-    );
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: passwordController.text,
+      );
 
+      // me guarda los datos en Firestore
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'email': _emailController.text,
+        'username': usernameController.text,
+        'role': _selectedValue,
+        'password': passwordController.text
+      });
 
-    // me guarda los datos en Firestore
-    await _firestore.collection('users').doc(userCredential.user!.uid).set({
-      'email': _emailController.text,
-      'username': usernameController.text,
-      'role': _selectedValue,
-      'password': passwordController.text
-    });
-
-    // Navegar a la pantalla de login
-    Navigator.pop(context);
-  } on FirebaseAuthException catch (e) {
-    print('Error al registrarse: $e');
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Error: ${e.message}'),
-    ));
-  } 
-}
-
+      // Navegar a la pantalla de login
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      print('Error al registrarse: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: ${e.message}'),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +172,7 @@ class _SignUpPruebaState extends State<SignUpPrueba> {
                   ElevatedButton(
                     onPressed: () async {
                       _register();
+                      
                     },
                     child: const Text("Sign Up"),
                   ),

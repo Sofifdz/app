@@ -6,13 +6,15 @@ class Pedidos {
   String descripcion;
   int precio;
   String fecha;
+  bool isEntregado;
 
   Pedidos({
     required this.NoPedido,
     required this.cliente,
     required this.descripcion,
     required this.precio,
-    required this.fecha
+    required this.fecha,
+    this.isEntregado = false, 
   });
 
   factory Pedidos.fromFirestore(DocumentSnapshot doc)
@@ -24,6 +26,7 @@ class Pedidos {
       descripcion: data['descripcion'] ?? '',
       precio:(data['precio'] ?? 0).toInt(),
       fecha: data['fecha'] ?? '',
+      isEntregado: data['isEntregado'] ?? false,
     );
   }
 
@@ -33,7 +36,8 @@ class Pedidos {
       'cliente':cliente,
       'descripcion': descripcion,
       'precio':precio,
-      'fecha': fecha
+      'fecha': fecha,
+      'isEntregado': isEntregado,
     };
   }
 }
