@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 class VistaAlmacen extends StatefulWidget {
   final String usuarioId;
   final String username;
+  
   const VistaAlmacen({
     super.key,
     required this.usuarioId,

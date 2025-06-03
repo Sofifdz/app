@@ -13,17 +13,18 @@ class VistaPedidos extends StatefulWidget {
   final String usuarioId;
   final String username;
 
-  const VistaPedidos({super.key, required this.usuarioId, required this.username});
+  const VistaPedidos(
+      {super.key, required this.usuarioId, required this.username});
 
   @override
   State<VistaPedidos> createState() => _VistaPedidosState();
 }
 
 class _VistaPedidosState extends State<VistaPedidos> {
-  String usuarioId = ''; 
-  String username = 'Cargando...'; 
+  String usuarioId = '';
+  String username = 'Cargando...';
   List<Pedidos> pedidosList = [];
-  bool isLoading = true;
+
   bool entregados = false;
 
   DateTime? fechaSeleccionada;
@@ -35,35 +36,6 @@ class _VistaPedidosState extends State<VistaPedidos> {
   @override
   void initState() {
     super.initState();
-    inicializarDatos();
-  }
-
-  void inicializarDatos() async {
-  String id = await ServiciosFirebasePersonal.getUsuarioId();
-  
-  String nombre = await ServiciosFirebasePersonal.getUsername(id);
-
-
-  setState(() {
-    usuarioId = id;
-    username = nombre;
-  });
-}
-
-
-  void obtenerUsername() async {
-    String nombre = await ServiciosFirebasePersonal.getUsername(usuarioId);
-    setState(() {
-      username = nombre;
-    });
-  }
-
-  void obtenerUsuarioId() async {
-    String id = await ServiciosFirebasePersonal
-        .getUsuarioId(); // Asegúrate de que este método exista
-    setState(() {
-      usuarioId = id;
-    });
   }
 
   @override
@@ -101,16 +73,15 @@ class _VistaPedidosState extends State<VistaPedidos> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => Vista_AgregarPedidoA(
-                        username: username,
-                        usuarioId: usuarioId,
-                      )));
+                            username: username,
+                            usuarioId: usuarioId,
+                          )));
             },
           )
         ],
       ),
-      drawer: username == 'Cargando...'
-          ? const Drawer(child: Center(child: CircularProgressIndicator()))
-          : DrawerConfig.administradorDrawer(context, usuarioId, username),
+      drawer: DrawerConfig.administradorDrawer(
+          context, widget.usuarioId, widget.username),
       body: cuerpo(context),
     );
   }
@@ -252,9 +223,10 @@ class _VistaPedidosState extends State<VistaPedidos> {
                                       MaterialPageRoute(
                                           builder: (context) =>
                                               VistaDetallespedido(
-                                                  pedidoId: pedido.NoPedido,
-                                                  username: username,
-                                                  usuarioId: usuarioId,)));
+                                                pedidoId: pedido.NoPedido,
+                                                username: username,
+                                                usuarioId: usuarioId,
+                                              )));
                                 },
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,

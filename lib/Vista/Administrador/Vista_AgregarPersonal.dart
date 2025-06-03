@@ -32,7 +32,7 @@ class _Vista_AgregarPersonalState extends State<Vista_AgregarPersonal> {
 
   Future<void> _register() async {
     try {
-      // Verificamos si ya existe un usuario con ese email
+    
       final querySnapshot = await _firestore
           .collection('users')
           .where('email', isEqualTo: _emailController.text)
@@ -45,7 +45,7 @@ class _Vista_AgregarPersonalState extends State<Vista_AgregarPersonal> {
         return;
       }
 
-      // Guardamos usuario directamente en Firestore
+  
       await _firestore.collection('users').add({
         'email': _emailController.text,
         'username': usernameController.text,
@@ -57,7 +57,7 @@ class _Vista_AgregarPersonalState extends State<Vista_AgregarPersonal> {
         SnackBar(content: Text('Registro exitoso')),
       );
 
-      Navigator.pop(context); // o navegar al login
+      Navigator.pop(context); 
     } catch (e) {
       print('Error al registrarse: $e');
       ScaffoldMessenger.of(context).showSnackBar(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app/Controlador/ProductoCantidad.dart';
 import 'package:app/Controlador/Productos.dart';
 import 'package:app/Vista/Componentes/DrawerConfig.dart';
+import 'package:app/Vista/Empleado/Cards_pan.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,12 @@ class VistaVentas extends StatefulWidget {
 }
 
 class _VistaVentasState extends State<VistaVentas> {
+  Map<String, int> cantidadesPan = {
+    "Pan 10": 0,
+    "Pan 9": 0,
+    "Pan 5": 0,
+  };
+
   TextEditingController codigoController = TextEditingController();
   FocusNode focusNode = FocusNode();
   List<ProductoConCantidad> productosEscaneados = [];
@@ -44,7 +51,7 @@ class _VistaVentasState extends State<VistaVentas> {
 
     final userId = user.uid;
 
-    // Obtener la caja abierta del usuario
+   
     final cajasAbiertasSnapshot = await FirebaseFirestore.instance
         .collection('cajas')
         .where('usuarioId', isEqualTo: userId)
@@ -58,16 +65,13 @@ class _VistaVentasState extends State<VistaVentas> {
       return;
     }
 
-    final cajaId = cajasAbiertasSnapshot.docs.first.id;
-
-    // Obtener el número de ventas previas del usuario
     final userVentasSnapshot = await FirebaseFirestore.instance
         .collection('ventas')
         .where('usuarioId', isEqualTo: userId)
         .get();
     final IDventa = userVentasSnapshot.docs.length + 1;
 
-    // Crear la venta
+    
     final venta = {
       'usuarioId': userId,
       'ventaId': IDventa,
@@ -78,12 +82,11 @@ class _VistaVentasState extends State<VistaVentas> {
       }).toList(),
       'total': calcularTotal(),
       'fecha': Timestamp.now(),
-      'IDventa': IDventa, // Asociamos la venta con la caja actual
+      'IDventa': IDventa,
     };
 
     await FirebaseFirestore.instance.collection('ventas').add(venta);
 
-    // Resto del código: actualizar existencias
     final batch = FirebaseFirestore.instance.batch();
     for (var pc in productosEscaneados) {
       final docRef = FirebaseFirestore.instance
@@ -118,12 +121,30 @@ class _VistaVentasState extends State<VistaVentas> {
     });
   }
 
-  Future<void> buscarProducto(String codigoBarras) async {
-    if (codigoBarras.isEmpty) return;
+  Future<void> buscarProducto(String input) async {
+    if (input.isEmpty) return;
+
+    // Regex para capturar código y cantidad: ej "12345*3"
+    final regex = RegExp(r'^(.+?)(\*(\d+))?$');
+    final match = regex.firstMatch(input);
+
+    if (match == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Formato de código inválido')),
+      );
+      return;
+    }
+
+    String codigo = match.group(1)!; // código antes del '*'
+    int cantidad = 1;
+
+    if (match.group(3) != null) {
+      cantidad = int.tryParse(match.group(3)!) ?? 1;
+    }
 
     DocumentSnapshot doc = await FirebaseFirestore.instance
         .collection('productos')
-        .doc(codigoBarras)
+        .doc(codigo)
         .get();
 
     if (doc.exists) {
@@ -133,9 +154,10 @@ class _VistaVentasState extends State<VistaVentas> {
           productosEscaneados.indexWhere((p) => p.producto.id == producto.id);
       setState(() {
         if (index == -1) {
-          productosEscaneados.add(ProductoConCantidad(producto: producto));
+          productosEscaneados
+              .add(ProductoConCantidad(producto: producto, cantidad: cantidad));
         } else {
-          productosEscaneados[index].cantidad++;
+          productosEscaneados[index].cantidad += cantidad;
         }
       });
     } else {
@@ -235,100 +257,82 @@ class _VistaVentasState extends State<VistaVentas> {
         widget.usuarioId,
         widget.username,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  CardsPan("Pan 10", const Color.fromARGB(255, 173, 219, 175),
-                      context),
-                  CardsPan("Pan 9", const Color.fromARGB(255, 173, 199, 221),
-                      context),
-                  CardsPan("Pan 5", const Color.fromARGB(255, 173, 128, 128),
-                      context),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            campoCodigo(),
-            SizedBox(height: 20),
-            titleproductos(),
-            SizedBox(height: 10),
-            Expanded(child: productosList()),
-            Divider(
-              thickness: 2,
-              color: Colors.black,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Total:",
-                    style: GoogleFonts.montserrat(
-                        fontSize: 24, fontWeight: FontWeight.bold)),
-                Text("\$${calcularTotal().toStringAsFixed(2)}",
-                    style: GoogleFonts.montserrat(
-                        fontSize: 24, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget CardsPan(String title, Color color, BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth * 0.3;
-
-    return Container(
-      width: cardWidth,
-      margin: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: color,
-        border: Border.all(color: Colors.black, width: 1.0),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: SizedBox(
-          height: 150,
-          child: Center(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.roboto(
-                      fontWeight: FontWeight.bold, fontSize: 25),
+                const SizedBox(height: 20),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      CardsPan(
+                        codigoController: codigoController,
+                        onAgregar: (nombre, precio, cantidad) {
+                          int index = productosEscaneados.indexWhere(
+                              (p) => p.producto.productoname == nombre);
+                          setState(() {
+                            if (index == -1) {
+                              productosEscaneados.add(ProductoConCantidad(
+                                producto: Productos(
+                                  id: 'id_generado',
+                                  productoname: nombre,
+                                  precio: precio.toInt(),
+                                  existencias: 0,
+                                ),
+                                cantidad: cantidad,
+                              ));
+                            } else {
+                              productosEscaneados[index].cantidad += cantidad;
+                            }
+                          });
+                          codigoController.clear();
+                          FocusScope.of(context).requestFocus(focusNode);
+                        },
+                        onEliminar: (nombre) {
+                          setState(() {
+                            int index = productosEscaneados.indexWhere(
+                                (pc) => pc.producto.productoname == nombre);
+                            if (index != -1) {
+                              if (productosEscaneados[index].cantidad > 1) {
+                                productosEscaneados[index].cantidad--;
+                              } else {
+                                productosEscaneados.removeAt(index);
+                              }
+                            }
+                          });
+                        },
+                      ),
+
+                    ],
+                  ),
                 ),
-                Text(
-                  '0',
-                  style: GoogleFonts.roboto(fontSize: 25),
+                const SizedBox(height: 20),
+                campoCodigo(),
+                const SizedBox(height: 20),
+                titleproductos(),
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.4,
+                  ),
+                  child: SingleChildScrollView(
+                    child: productosList(),
+                  ),
                 ),
+                const Divider(thickness: 2, color: Colors.black),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.remove,
-                        color: Colors.red,
-                        size: 35,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.add,
-                        color: Colors.green,
-                        size: 35,
-                      ),
-                    ),
+                    Text("Total:",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text("\$${calcularTotal().toStringAsFixed(2)}",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],

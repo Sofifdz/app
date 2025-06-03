@@ -4,28 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ServiciosFirebasePersonal {
-  // Método para eliminar un usuario de Firebase Authentication y Firestore
   static Future<void> deleteUser(
       String userId, VoidCallback onEmpleadosUpdate) async {
     try {
       FirebaseFirestore db = FirebaseFirestore.instance;
-      FirebaseAuth auth = FirebaseAuth.instance;
 
-      // Obtener el usuario autenticado actualmente
-      User? currentUser = auth.currentUser;
+      await db.collection('users').doc(userId).delete();
 
-      if (currentUser != null && currentUser.uid == userId) {
-        // Eliminar el documento del usuario en Firestore
-        await db.collection('users').doc(userId).delete();
-
-        // Eliminar el usuario de Firebase Authentication
-        await currentUser.delete();
-
-        print(
-            "Usuario eliminado completamente de Firebase Authentication y Firestore.");
-      } else {
-        print("El usuario autenticado no coincide con el ID proporcionado.");
-      }
+      print("Usuario eliminado de Firestore.");
     } catch (e) {
       print("Error al eliminar el usuario: $e");
     } finally {
@@ -33,28 +19,24 @@ class ServiciosFirebasePersonal {
     }
   }
 
-  // Método para obtener el ID del usuario autenticado
   static Future<String> getUsuarioId() async {
     String usuarioId = '';
 
     try {
-      // Obtener el usuario autenticado actualmente
       User? user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
-        // Si el usuario está autenticado, obtener el UID
         usuarioId = user.uid;
       }
     } catch (e) {
       print("Error al obtener el usuario ID: $e");
     }
 
-    return usuarioId; // Devolver el ID del usuario o cadena vacía si no está autenticado
+    return usuarioId;
   }
 
-  // Método para obtener el nombre de usuario desde Firestore
   static Future<String> getUsername(String userId) async {
-    if (userId.isEmpty) return ''; // ← protección contra ID vacío
+    if (userId.isEmpty) return '';
 
     final userDoc =
         await FirebaseFirestore.instance.collection('users').doc(userId).get();
@@ -63,8 +45,6 @@ class ServiciosFirebasePersonal {
     }
     return '';
   }
-
-  
 }
 
 class ServiciosFirebaseProductos {

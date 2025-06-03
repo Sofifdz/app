@@ -161,29 +161,6 @@ class _LoginState extends State<Login> {
                             ),
                             onPressed: () async {
                               await _login();
-
-                              /*User? user = FirebaseAuth.instance.currentUser;
-
-                              if (user != null) {
-                                // Obtener los datos del usuario desde Firestore
-                                DocumentSnapshot userDoc =
-                                    await FirebaseFirestore.instance
-                                        .collection('users')
-                                        .doc(user.uid)
-                                        .get();
-
-                                if (userDoc.exists) {
-                                  String usuarioId = user.uid;
-                                  String username =
-                                      userDoc['username'] ?? 'Usuario';
-
-                                  AperturaCajaDialog.show(
-                                    context: context,
-                                    usuarioId: usuarioId,
-                                    username: username,
-                                  );
-                                }
-                              }*/
                             },
                             child: Text(
                               "Iniciar",
