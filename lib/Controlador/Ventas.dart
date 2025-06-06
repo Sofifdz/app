@@ -1,45 +1,44 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Ventas {
-  String id; 
-  String usuarioId;
-  int IDventa; 
-  List<Map<String, dynamic>> productos;
-  double total;
-  String fecha;
-  String IDcaja;
+  final int IDventa;
+  final List<dynamic> productos;
+  final double total;
+  final String fecha;
+  final String usuarioId;
+  final String IDcaja;
+  final bool desdePedido;
+  final String? pedidoId;
+  final String? cliente; // <-- Nuevo campo
+  final String? descripcion;
 
   Ventas({
-    required this.id,
-    required this.usuarioId,
     required this.IDventa,
     required this.productos,
     required this.total,
     required this.fecha,
-    required this.IDcaja
+    required this.usuarioId,
+    required this.IDcaja,
+    this.desdePedido = false,
+    this.pedidoId,
+    this.cliente,
+    this.descripcion
   });
 
   factory Ventas.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    return Ventas(
-      id: doc.id,
-      usuarioId: data['usuarioId'] ?? '',
-      IDventa: data['ventaId'] ?? 0,
-      productos: List<Map<String, dynamic>>.from(data['productos'] ?? []),
-      total: (data['total'] ?? 0).toDouble(),
-      fecha: (data['fecha']).toDate().toString(),
-      IDcaja: data['IDcaja'] ?? '',
-    );
-  }
+    final data = doc.data() as Map<String, dynamic>;
 
-  Map<String, dynamic> toFirestore() {
-    return {
-      'usuarioId': usuarioId,
-      'ventaId': IDventa,
-      'productos': productos,
-      'total': total,
-      'fecha': fecha,
-      'IDcaja':IDcaja,
-    };
+    return Ventas(
+      IDventa: data['ventaId'] ?? 0,
+      productos: data['productos'] ?? [],
+      total: (data['total'] ?? 0).toDouble(),
+      fecha: (data['fecha'] as Timestamp).toDate().toIso8601String(),
+      usuarioId: data['usuarioId'] ?? '',
+      IDcaja: data['IDcaja'] ?? '',
+      desdePedido: data['desdePedido'] ?? false,
+      pedidoId: data['pedidoId'],
+      cliente: data['cliente'], // <-- Aquí lo lees
+      descripcion: data['descripcion']
+    );
   }
 }

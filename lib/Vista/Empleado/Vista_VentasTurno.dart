@@ -1,5 +1,6 @@
 import 'package:app/Controlador/Ventas.dart';
 import 'package:app/Vista/Componentes/DrawerConfig.dart';
+import 'package:app/Vista/Empleado/Ventana_ticket.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +10,11 @@ class VistaVentasturno extends StatefulWidget {
   final String usuarioId;
   final String username;
 
-  const VistaVentasturno({super.key, required this.usuarioId,required this.username,});
+  const VistaVentasturno({
+    super.key,
+    required this.usuarioId,
+    required this.username,
+  });
 
   @override
   State<VistaVentasturno> createState() => _VistaVentasturnoState();
@@ -26,6 +31,7 @@ class _VistaVentasturnoState extends State<VistaVentasturno> {
     final snapshot = await FirebaseFirestore.instance
         .collection('cajas')
         .where('usuarioId', isEqualTo: usuarioId)
+        .where('estado', isEqualTo: 'abierta')
         .orderBy('fechaApertura', descending: true)
         .limit(1)
         .get();
@@ -40,6 +46,7 @@ class _VistaVentasturnoState extends State<VistaVentasturno> {
         'fechaApertura': apertura,
         if (cierre != null) 'fechaCierre': cierre,
         'cajaId': cajaId,
+        'inicioCaja': data['inicioCaja'] ?? 0,
       };
     }
 
@@ -62,50 +69,39 @@ class _VistaVentasturnoState extends State<VistaVentasturno> {
         }),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 15),
-            child: FutureBuilder<Map<String, dynamic>>(
-              future: obtenerCajaActual(widget.usuarioId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2));
-                } else if (!snapshot.hasData || snapshot.data == null) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text('Caja: \$0',
+              padding: const EdgeInsets.only(right: 15),
+              child: FutureBuilder<Map<String, dynamic>>(
+                future: obtenerCajaActual(widget.usuarioId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2));
+                  } else {
+                    final inicioCaja = snapshot.data?['inicioCaja'];
+                    final monto =
+                        (inicioCaja is num) ? inicioCaja.toDouble() : 0.0;
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text(
+                          'Caja: \$${monto.toStringAsFixed(2)}',
                           style: GoogleFonts.montserrat(
                             fontSize: 15,
                             color: const Color.fromARGB(255, 81, 81, 81),
-                          )),
-                    ),
-                  );
-                } else {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                          'Caja: \$${snapshot.data!['apertura']!.toDate()}',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 15,
-                            color: const Color.fromARGB(255, 81, 81, 81),
-                          )),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
+              )),
         ],
         title: Center(
           child: Text(
@@ -142,12 +138,12 @@ class _VistaVentasturnoState extends State<VistaVentasturno> {
             ),
           );
         }
-        final IDcaja = fechasSnapshot.data!['IDcaja'];
+        final IDcaja = fechasSnapshot.data!['cajaId'];
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('ventas')
-              .where('cajaId', isEqualTo: IDcaja) // 👈 corregido
+              .where('IDcaja', isEqualTo: IDcaja)
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -168,66 +164,125 @@ class _VistaVentasturnoState extends State<VistaVentasturno> {
                 .map((doc) => Ventas.fromFirestore(doc))
                 .toList();
 
-            return ListView.builder(
-              itemCount: ventasList.length,
-              itemBuilder: (context, index) {
-                final venta = ventasList[index];
-                final DateTime fechaParseada = DateTime.parse(venta.fecha);
-                return SizedBox(
-                  height: 100,
-                  child: Card(
-                    margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                    color: const Color.fromARGB(255, 211, 234, 250),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: InkWell(
-                      onTap: () {},
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '#${venta.IDventa.toString()}',
-                            style: GoogleFonts.montserrat(
-                                fontSize: 25,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold),
+            double totalVentas = 0;
+            for (var venta in ventasList) {
+              totalVentas += venta.total;
+            }
+
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: ventasList.length,
+                    itemBuilder: (context, index) {
+                      final venta = ventasList[index];
+                      final DateTime fechaParseada =
+                          DateTime.parse(venta.fecha);
+                      String ff = DateFormat('dd/MM/yyyy\nhh:mm a')
+                          .format(fechaParseada);
+
+                      return Card(
+                        margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                        color: const Color.fromARGB(255, 211, 234, 250),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context)=>VentanaTicket(venta: venta,)
+                            ));
+                          },
+                          child: SizedBox(
+                            height: 100,
+                            child: Center(
+                              child: venta.desdePedido == true ?
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Pedido ${venta.cliente}',
+                                    style: GoogleFonts.montserrat(fontSize: 23),
+                                  ),
+                                  Text(
+                                    '\$${venta.total.toStringAsFixed(2)}',
+                                    style: GoogleFonts.montserrat(fontSize: 23),
+                                  ),
+                                  Text(
+                                    ff,
+                                    style: GoogleFonts.montserrat(fontSize: 15),
+                                  ),
+                                ],
+                              ):
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '#${venta.IDventa.toString()}',
+                                    style: GoogleFonts.montserrat(fontSize: 23),
+                                  ),
+                                  Text(
+                                    '\$${venta.total.toStringAsFixed(2)}',
+                                    style: GoogleFonts.montserrat(fontSize: 23),
+                                  ),
+                                  Text(
+                                    ff,
+                                    style: GoogleFonts.montserrat(fontSize: 15),
+                                  ),
+                                ],
+                              )
+
+                              /*Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '#${venta.IDventa.toString()}',
+                                    style: GoogleFonts.montserrat(fontSize: 23),
+                                  ),
+                                  Text(
+                                    '\$${venta.total.toStringAsFixed(2)}',
+                                    style: GoogleFonts.montserrat(fontSize: 23),
+                                  ),
+                                  Text(
+                                    ff,
+                                    style: GoogleFonts.montserrat(fontSize: 15),
+                                  ),
+                                ],
+                              ),*/
+                            )
                           ),
-                          Text(
-                            '\$${venta.total.toStringAsFixed(2)}',
-                            style: GoogleFonts.montserrat(
-                                fontSize: 25,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          Column(
-                            children: [
-                              Text(
-                                DateFormat("dd/MM/yyyy", 'es_ES')
-                                    .format(fechaParseada),
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 20,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                DateFormat("hh:mm a", 'es_ES')
-                                    .format(fechaParseada),
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 20,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+                const Divider(thickness: 1),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Total",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "\$${totalVentas.toStringAsFixed(2)}",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             );
           },
         );

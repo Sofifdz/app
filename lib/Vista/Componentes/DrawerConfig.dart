@@ -1,6 +1,7 @@
 import 'package:app/Vista/Administrador/Vista_Almacen.dart';
 import 'package:app/Vista/Administrador/Vista_Pedidos.dart';
 import 'package:app/Vista/Administrador/Vista_Personal.dart';
+import 'package:app/Vista/Administrador/vistaAdmin.dart';
 import 'package:app/Vista/Componentes/Component_Drawer.dart';
 import 'package:app/Vista/Componentes/ShowDialogCaja.dart';
 import 'package:app/Vista/Empleado/Vista_PedidosEmpleado.dart';
@@ -28,7 +29,12 @@ class DrawerConfig {
       ],
       onTaps: [
         // Asegúrate de que el username esté disponible al hacer clic
-        () {},
+        () {Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    Vistaadmin(usuarioId: usuarioId, username: username)),
+          );},
         () {
           Navigator.push(
             context,

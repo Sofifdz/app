@@ -1,11 +1,9 @@
 import 'dart:async';
-
 import 'package:app/Controlador/ProductoCantidad.dart';
 import 'package:app/Controlador/Productos.dart';
 import 'package:app/Vista/Componentes/DrawerConfig.dart';
 import 'package:app/Vista/Empleado/Cards_pan.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -46,12 +44,9 @@ class _VistaVentasState extends State<VistaVentas> {
   }
 
   Future<void> guardarVenta() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null || productosEscaneados.isEmpty) return;
+    final userId = widget.usuarioId;
+    if (userId.isEmpty || productosEscaneados.isEmpty) return;
 
-    final userId = user.uid;
-
-   
     final cajasAbiertasSnapshot = await FirebaseFirestore.instance
         .collection('cajas')
         .where('usuarioId', isEqualTo: userId)
@@ -65,13 +60,14 @@ class _VistaVentasState extends State<VistaVentas> {
       return;
     }
 
+    final IDcaja = cajasAbiertasSnapshot.docs.first.id;
+
     final userVentasSnapshot = await FirebaseFirestore.instance
         .collection('ventas')
         .where('usuarioId', isEqualTo: userId)
         .get();
     final IDventa = userVentasSnapshot.docs.length + 1;
 
-    
     final venta = {
       'usuarioId': userId,
       'ventaId': IDventa,
@@ -83,42 +79,49 @@ class _VistaVentasState extends State<VistaVentas> {
       'total': calcularTotal(),
       'fecha': Timestamp.now(),
       'IDventa': IDventa,
+      'IDcaja': IDcaja,
     };
 
-    await FirebaseFirestore.instance.collection('ventas').add(venta);
+    try {
+      await FirebaseFirestore.instance.collection('ventas').add(venta);
 
-    final batch = FirebaseFirestore.instance.batch();
-    for (var pc in productosEscaneados) {
-      final docRef = FirebaseFirestore.instance
-          .collection('productos')
-          .doc(pc.producto.id);
+      final batch = FirebaseFirestore.instance.batch();
+      for (var pc in productosEscaneados) {
+        final docRef = FirebaseFirestore.instance
+            .collection('productos')
+            .doc(pc.producto.id);
 
-      final doc = await docRef.get();
-      if (doc.exists) {
-        final currentStock =
-            (doc.data() as Map<String, dynamic>)['existencias'] ?? 0;
-        final newStock = currentStock - pc.cantidad;
+        final doc = await docRef.get();
+        if (doc.exists) {
+          final currentStock =
+              (doc.data() as Map<String, dynamic>)['existencias'] ?? 0;
+          final newStock = currentStock - pc.cantidad;
 
-        if (newStock < 0) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(
-                  'No hay suficientes existencias de ${pc.producto.productoname}')));
-          continue;
+          if (newStock < 0) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                    'No hay suficientes existencias de ${pc.producto.productoname}')));
+            continue;
+          }
+
+          batch.update(docRef, {'existencias': newStock});
         }
-
-        batch.update(docRef, {'existencias': newStock});
       }
+
+      await batch.commit();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Venta #$IDventa registrada con éxito')),
+      );
+
+      setState(() {
+        productosEscaneados.clear();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al registrar la venta: $e')),
+      );
     }
-
-    await batch.commit();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Venta #$IDventa registrada con éxito')),
-    );
-
-    setState(() {
-      productosEscaneados.clear();
-    });
   }
 
   Future<void> buscarProducto(String input) async {
@@ -135,7 +138,7 @@ class _VistaVentasState extends State<VistaVentas> {
       return;
     }
 
-    String codigo = match.group(1)!; // código antes del '*'
+    String codigo = match.group(1)!;
     int cantidad = 1;
 
     if (match.group(3) != null) {
@@ -306,7 +309,6 @@ class _VistaVentasState extends State<VistaVentas> {
                           });
                         },
                       ),
-
                     ],
                   ),
                 ),

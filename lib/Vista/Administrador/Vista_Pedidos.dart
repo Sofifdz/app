@@ -75,6 +75,7 @@ class _VistaPedidosState extends State<VistaPedidos> {
                       builder: (context) => Vista_AgregarPedidoA(
                             username: username,
                             usuarioId: usuarioId,
+                          
                           )));
             },
           )
@@ -139,6 +140,7 @@ class _VistaPedidosState extends State<VistaPedidos> {
               return isFechaOk();
             }
           }).toList();
+          
           pedidosFiltrados.sort((a, b) {
             if (!a.isEntregado && b.isEntregado) {
               return -1; // a va primero

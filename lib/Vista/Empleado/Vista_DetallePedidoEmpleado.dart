@@ -28,22 +28,66 @@ class _VistaDetallespedidoEmpleadoState
     setState(() {});
   }
 
-  void entregarPedido() {
-    FirebaseFirestore.instance
+  void entregarPedido() async {
+    final pedidoDoc = await FirebaseFirestore.instance
         .collection('pedidos')
         .doc(widget.pedidoId)
-        .update({
-      'isEntregado': true,
-    }).then((_) {
+        .get();
+
+    final pedidoData = pedidoDoc.data() as Map<String, dynamic>;
+
+    // 1. Obtener caja abierta del usuario
+    final cajaAbierta = await FirebaseFirestore.instance
+        .collection('cajas')
+        .where('estado', isEqualTo: 'abierta')
+        .limit(1)
+        .get();
+
+    if (cajaAbierta.docs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Pedido entregado exitosamente")),
+        SnackBar(content: Text("No hay una caja abierta")),
       );
-      Navigator.pop(context);
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al entregar el pedido: $error")),
-      );
+      return;
+    }
+
+    final cajaData = cajaAbierta.docs.first.data();
+    final usuarioId = cajaData['usuarioId'];
+    final IDcaja = cajaAbierta.docs.first.id;
+
+    // 2. Crear lista de productos desde el pedido
+    final productos = [
+      {
+        'nombre': pedidoData['descripcion'],
+        'cantidad': 1,
+        'precio': pedidoData['precio'],
+      }
+    ];
+
+    // 3. Registrar la venta
+    await FirebaseFirestore.instance.collection('ventas').add({
+      'usuarioId': usuarioId,
+      'ventaId': DateTime.now().millisecondsSinceEpoch,
+      'productos': productos,
+      'total': pedidoData['precio'],
+      'fecha': Timestamp.now(),
+      'IDcaja': IDcaja,
+      'desdePedido': true,
+      'pedidoId': widget.pedidoId,
+      'cliente': pedidoData['cliente'], 
+      'descripcion':pedidoData['descripcion']
     });
+
+    // 4. Marcar el pedido como entregado
+    await FirebaseFirestore.instance
+        .collection('pedidos')
+        .doc(widget.pedidoId)
+        .update({'isEntregado': true});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Pedido entregado y venta registrada")),
+    );
+
+    Navigator.pop(context);
   }
 
   @override
