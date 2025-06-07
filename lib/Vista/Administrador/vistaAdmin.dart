@@ -143,7 +143,7 @@ class _VistaadminState extends State<Vistaadmin> {
                                   ),
                                   const SizedBox(height: 20),
                                   Text(
-                                    "Total del último turno: $total",
+                                    "Total del último corte: $total",
                                     style: GoogleFonts.montserrat(
                                       fontSize: 20,
                                       color: Colors.black,

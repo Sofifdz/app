@@ -12,9 +12,9 @@ class VentanaTicket extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFBBDEFB),
+        backgroundColor: const Color.fromARGB(255, 209, 219, 250),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 35,),
           onPressed: () => Navigator.pop(context),
         ),
       ),

@@ -1,3 +1,5 @@
+
+import 'package:app/Vista/Administrador/DetalleCorte.dart';
 import 'package:app/Vista/Componentes/Component_date.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -19,28 +21,24 @@ class VentasPorUsuario extends StatefulWidget {
 }
 
 class _VentasPorUsuarioState extends State<VentasPorUsuario> {
-  DateTime? fechaSeleccionada;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromARGB(160, 133, 203, 144),
-        leading: Builder(builder: (context) {
-          return IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Color.fromARGB(255, 81, 81, 81),
-              size: 35,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          );
-        }),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 81, 81, 81),
+            size: 35,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: Center(
           child: Text(
-            'Ventas de ${widget.nombreUsuario}',
+            'Cortes de ${widget.nombreUsuario}',
             style: GoogleFonts.montserrat(
               fontSize: 30,
               fontWeight: FontWeight.bold,
@@ -48,126 +46,80 @@ class _VentasPorUsuarioState extends State<VentasPorUsuario> {
             ),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.calendar_month,
-              color: Color.fromARGB(255, 81, 81, 81),
-              size: 30,
-            ),
-            onPressed: () async {
-              final fecha = await Component_date.show(
-                context: context,
-                initialDate: fechaSeleccionada,
-              );
-
-              setState(() {
-                fechaSeleccionada = fecha;
-              });
-            },
-          ),
-        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('ventas')
+            .collection('cajas')
             .where('usuarioId', isEqualTo: widget.userId)
-            .orderBy('fecha', descending: true)
+            .where('estado', isEqualTo: 'cerrada')
+            .orderBy('fechaCierre', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
-            return Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          final ventas = snapshot.data!.docs;
+          final cajas = snapshot.data!.docs;
+          print('Cajas encontradas: ${cajas.length}');
 
-          // Filtrar por fecha si se seleccionó una
-          final ventasFiltradas = ventas.where((venta) {
-            if (fechaSeleccionada == null) return true;
-            if (venta['fecha'] is! Timestamp) return false;
+          print('userId: ${widget.userId}');
 
-            final fecha = (venta['fecha'] as Timestamp).toDate();
-            return fecha.year == fechaSeleccionada!.year &&
-                fecha.month == fechaSeleccionada!.month &&
-                fecha.day == fechaSeleccionada!.day;
-          }).toList();
-
-          if (ventasFiltradas.isEmpty) {
+          if (cajas.isEmpty) {
             return Center(
               child: Text(
-                'No hay ventas registradas para esta fecha.',
+                'No hay cajas para este usuario',
                 style: GoogleFonts.montserrat(fontSize: 20, color: Colors.red),
               ),
             );
           }
 
-          return Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: ListView.builder(
-                itemCount: ventasFiltradas.length,
-                itemBuilder: (context, index) {
-                  final venta = ventasFiltradas[index];
-                  final data = venta.data() as Map<String, dynamic>;
+          return ListView.builder(
+            itemCount: cajas.length,
+            itemBuilder: (context, index) {
+              final data = cajas[index].data() as Map<String, dynamic>;
 
-                  String fechaFormateada = '';
-                  if (data['fecha'] is Timestamp) {
-                    final fecha = (data['fecha'] as Timestamp).toDate();
-                    fechaFormateada =
-                        DateFormat('dd/MM/yyyy\nhh:mm a').format(fecha);
-                  }
+              final fechaApertura = data['fechaApertura'] != null
+                  ? (data['fechaApertura'] as Timestamp).toDate()
+                  : null;
 
-                  final bool esDesdePedido = data.containsKey('desdePedido') &&
-                      data['desdePedido'] == true;
+              final fechaCierre = data['fechaCierre'] != null
+                  ? (data['fechaCierre'] as Timestamp).toDate()
+                  : null;
 
-                  return Card(
-                    color: const Color.fromARGB(146, 225, 225, 225),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: SizedBox(
-                      height: 80,
-                      child: Center(
-                          child: Row(
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: Text(
-                              esDesdePedido
-                                  ? 'Pedido ${data['pedidoId']}'
-                                  : '#${data['IDventa']}',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 20,
-                                color: const Color.fromARGB(255, 34, 34, 34),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Text(
-                              '\$${data['total']}',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 23,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Text(
-                              fechaFormateada,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 15,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )),
+              final inicio = data['inicioCaja'] ?? 0;
+              final cierre = data['cierreCaja'] ?? 0;
+
+              final format = DateFormat('dd/MM/yyyy hh:mm a');
+
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DetalleCorte(cajaId: cajas[index].id),
                     ),
                   );
-                }),
+                },
+                child: SizedBox(
+                  height: 100,
+                  child: Card(
+                    color: const Color.fromARGB(146, 225, 225, 225),
+                    margin: const EdgeInsets.all(10.0),
+                    child: ListTile(
+                      title: Center(
+                        child: Text(
+                          fechaCierre != null
+                              ? "Cierre: ${format.format(fechaCierre)}"
+                              : "Sin fecha de cierre",
+                          style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w500, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

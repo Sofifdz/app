@@ -91,10 +91,6 @@ class _Vista_AgregarPedidoAState extends State<Vista_AgregarPedidoA> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Componentes(
-                "No. Pedido",
-                NoPedidoController,
-              ),
               Componentes("Cliente", clienteController),
               Componentes("Descripción", descripcionController,
                   isDescription: true),

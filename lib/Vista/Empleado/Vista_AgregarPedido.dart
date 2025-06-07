@@ -31,11 +31,19 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
 
   Future<void> registrerPedido() async {
     try {
+      // Obtener todos los pedidos actuales
+      final snapshot =
+          await FirebaseFirestore.instance.collection('pedidos').get();
+
+      // Asignar ID basado en la cantidad de documentos
+      final newPedidoId =
+          (snapshot.docs.length + 1).toString(); // Siempre como string
+
       await FirebaseFirestore.instance
           .collection('pedidos')
-          .doc(NoPedidoController.text)
+          .doc(newPedidoId)
           .set({
-        'id': NoPedidoController.text,
+        'id': newPedidoId,
         'cliente': clienteController.text,
         'descripcion': descripcionController.text,
         'precio': int.parse(precioController.text),
@@ -43,7 +51,7 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
         'isEntregado': false,
       });
 
-      print('ID: ${NoPedidoController.text}');
+      print('ID: $newPedidoId');
       print('Cliente: ${clienteController.text}');
       print('Descripción: ${descripcionController.text}');
       print('Precio: ${precioController.text}');
@@ -54,10 +62,10 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
       );
 
       Navigator.pop(context);
-    } on FirebaseAuthException catch (e) {
-      print('Error al registrarse: $e');
+    } catch (e) {
+      print('Error al registrar pedido: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Error: ${e.message}'),
+        content: Text('Error: $e'),
       ));
     }
   }
@@ -91,10 +99,6 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Componentes(
-                "No. Pedido",
-                NoPedidoController,
-              ),
               Componentes("Cliente", clienteController),
               Componentes("Descripción", descripcionController,
                   isDescription: true),
