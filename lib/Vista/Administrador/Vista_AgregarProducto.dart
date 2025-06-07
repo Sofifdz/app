@@ -13,8 +13,8 @@ class VistaAgregarproducto extends StatefulWidget {
 }
 
 class _VistaAgregarproductoState extends State<VistaAgregarproducto> {
-  String usuarioId = ''; // Variable para el usuario ID
-  String username = ''; // Variable para el nombre de usuario
+  String usuarioId = ''; 
+  String username = ''; 
   final formKey = GlobalKey<FormState>();
 
   final idcontroller = TextEditingController();
@@ -23,8 +23,8 @@ class _VistaAgregarproductoState extends State<VistaAgregarproducto> {
   final priceController = TextEditingController();
   void initState() {
     super.initState();
-    obtenerUsername(); // Fetch username
-    obtenerUsuarioId(); // Fetch usuarioId
+    obtenerUsername(); 
+    obtenerUsuarioId(); 
   }
 
   void obtenerUsername() async {
@@ -37,7 +37,7 @@ class _VistaAgregarproductoState extends State<VistaAgregarproducto> {
 
   void obtenerUsuarioId() async {
     String id = await ServiciosFirebasePersonal
-        .getUsuarioId(); // Asegúrate de que este método exista
+        .getUsuarioId(); 
     setState(() {
       usuarioId = id;
     });

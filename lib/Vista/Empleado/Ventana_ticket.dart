@@ -23,7 +23,7 @@ class VentanaTicket extends StatelessWidget {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white, 
+               color: Colors.grey[200],
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(

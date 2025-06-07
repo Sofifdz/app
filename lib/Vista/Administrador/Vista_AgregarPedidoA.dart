@@ -127,17 +127,17 @@ class _Vista_AgregarPedidoAState extends State<Vista_AgregarPedidoA> {
                                   data: ThemeData.light().copyWith(
                                     colorScheme: ColorScheme.light(
                                       primary: Colors
-                                          .green, // color de encabezado y selección
+                                          .green, 
                                       onPrimary: Colors
-                                          .white, // texto sobre color primario
-                                      onSurface: Colors.black, // texto normal
+                                          .white,
+                                      onSurface: Colors.black,
                                     ),
                                     dialogBackgroundColor:
                                         Color.fromARGB(255, 240, 240, 240),
                                     textButtonTheme: TextButtonThemeData(
                                       style: TextButton.styleFrom(
                                         foregroundColor: Colors
-                                            .black, // color de texto en los botones
+                                            .black, 
                                         textStyle: GoogleFonts.montserrat(
                                             fontSize: 16),
                                       ),
@@ -158,17 +158,17 @@ class _Vista_AgregarPedidoAState extends State<Vista_AgregarPedidoA> {
                                     data: ThemeData.light().copyWith(
                                       colorScheme: ColorScheme.light(
                                         primary: Colors
-                                            .green, // color de encabezado y selección
+                                            .green, 
                                         onPrimary: Colors
-                                            .white, // texto sobre color primario
-                                        onSurface: Colors.black, // texto normal
+                                            .white,
+                                        onSurface: Colors.black,
                                       ),
                                       dialogBackgroundColor:
                                           Color.fromARGB(255, 240, 240, 240),
                                       textButtonTheme: TextButtonThemeData(
                                         style: TextButton.styleFrom(
                                           foregroundColor: Colors
-                                              .black, // color de texto en los botones
+                                              .black, 
                                           textStyle: GoogleFonts.montserrat(
                                               fontSize: 16),
                                         ),
@@ -235,7 +235,7 @@ class _Vista_AgregarPedidoAState extends State<Vista_AgregarPedidoA> {
           const SizedBox(height: 10),
           Container(
             padding: isDescription
-                ? const EdgeInsets.all(8.0) // Puedes a
+                ? const EdgeInsets.all(8.0) 
                 : EdgeInsets.zero,
             child: TextFormField(
               controller: controller,

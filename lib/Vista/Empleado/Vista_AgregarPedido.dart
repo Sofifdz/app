@@ -31,14 +31,12 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
 
   Future<void> registrerPedido() async {
     try {
-      // Obtener todos los pedidos actuales
+
       final snapshot =
           await FirebaseFirestore.instance.collection('pedidos').get();
 
-      // Asignar ID basado en la cantidad de documentos
       final newPedidoId =
-          (snapshot.docs.length + 1).toString(); // Siempre como string
-
+          (snapshot.docs.length + 1).toString(); 
       await FirebaseFirestore.instance
           .collection('pedidos')
           .doc(newPedidoId)
@@ -195,7 +193,7 @@ class _VistaAgregarpedidoState extends State<VistaAgregarpedido> {
           const SizedBox(height: 10),
           Container(
             padding: isDescription
-                ? const EdgeInsets.all(8.0) // Puedes a
+                ? const EdgeInsets.all(8.0) 
                 : EdgeInsets.zero,
             child: TextFormField(
               controller: controller,

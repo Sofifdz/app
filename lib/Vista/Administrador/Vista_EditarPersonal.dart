@@ -209,7 +209,7 @@ class _VistaEditarpersonalState extends State<VistaEditarpersonal> {
       onPressed: () async {
         if (formKey.currentState!.validate()) {
           final editUser = Usuarios(
-            id: widget.user.id, // Se mantiene el mismo ID
+            id: widget.user.id,
             email: emailController.text,
             username: usernameController.text,
             password: passwordController.text,

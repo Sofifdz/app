@@ -36,7 +36,7 @@ class _VistaDetallespedidoEmpleadoState
 
     final pedidoData = pedidoDoc.data() as Map<String, dynamic>;
 
-    // 1. Obtener caja abierta del usuario
+   
     final cajaAbierta = await FirebaseFirestore.instance
         .collection('cajas')
         .where('estado', isEqualTo: 'abierta')
@@ -54,7 +54,6 @@ class _VistaDetallespedidoEmpleadoState
     final usuarioId = cajaData['usuarioId'];
     final IDcaja = cajaAbierta.docs.first.id;
 
-    // 2. Crear lista de productos desde el pedido
     final productos = [
       {
         'nombre': pedidoData['descripcion'],
@@ -63,7 +62,7 @@ class _VistaDetallespedidoEmpleadoState
       }
     ];
 
-    // 3. Registrar la venta
+
     await FirebaseFirestore.instance.collection('ventas').add({
       'usuarioId': usuarioId,
       'ventaId': DateTime.now().millisecondsSinceEpoch,

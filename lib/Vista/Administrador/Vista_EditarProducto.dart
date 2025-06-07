@@ -195,7 +195,7 @@ class _VistaEditarproductoState extends State<VistaEditarproducto> {
       onPressed: () async {
         if (formKey.currentState!.validate()) {
           final editProduct = Productos(
-              id: widget.producto.id, // Se mantiene el mismo ID
+              id: widget.producto.id, 
               productoname: productonameController.text,
               precio: int.parse(precioController.text),
               existencias: int.parse(existenciaController.text));

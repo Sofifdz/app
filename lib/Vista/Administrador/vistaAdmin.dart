@@ -49,9 +49,7 @@ class _VistaadminState extends State<Vistaadmin> {
         ),
         drawer: DrawerConfig.administradorDrawer(
             context, widget.usuarioId, widget.username),
-        body: cuerpo(
-            context) 
-        );
+        body: cuerpo(context));
   }
 
   Widget cuerpo(BuildContext context) {
@@ -86,24 +84,24 @@ class _VistaadminState extends State<Vistaadmin> {
 
               return FutureBuilder<QuerySnapshot>(
                 future: FirebaseFirestore.instance
-                    .collection('ventas')
-                    .where('usuarioId',
-                        isEqualTo: empleadoId) // ✅ ID en lugar de username
-                    .orderBy('fecha', descending: true)
+                    .collection('cajas')
+                    .where('usuarioId', isEqualTo: empleadoId)
+                    .orderBy('fechaApertura', descending: true)
                     .limit(1)
                     .get(),
-                builder: (context, snapshotVenta) {
+                builder: (context, snapshotCorte) {
                   String total = "Cargando...";
 
-                  if (snapshotVenta.hasData &&
-                      snapshotVenta.data!.docs.isNotEmpty) {
-                    final venta = snapshotVenta.data!.docs.first.data()
+                  if (snapshotCorte.hasData &&
+                      snapshotCorte.data!.docs.isNotEmpty) {
+                    final corte = snapshotCorte.data!.docs.first.data()
                         as Map<String, dynamic>;
-                    total = venta['total'].toString();
-                  } else if (snapshotVenta.connectionState ==
+                    total = corte['cierreCaja']
+                        .toString();
+                  } else if (snapshotCorte.connectionState ==
                       ConnectionState.done) {
-                    total = "Sin ventas";
-                  } else if (snapshotVenta.hasError) {
+                    total = "Sin cortes";
+                  } else if (snapshotCorte.hasError) {
                     total = "Error";
                   }
 
@@ -118,8 +116,7 @@ class _VistaadminState extends State<Vistaadmin> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => VentasPorUsuario(
-                              userId:
-                                  empleado.id, 
+                              userId: empleado.id,
                               nombreUsuario: empleado['username'],
                             ),
                           ),

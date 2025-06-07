@@ -161,7 +161,7 @@ class _VistaPedidosState extends State<VistaPedidos> {
                   //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      entregados ? "Entregados" : "Todos", //cambia el texto
+                      entregados ? "Entregados" : "Todos",
                       style: GoogleFonts.montserrat(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,

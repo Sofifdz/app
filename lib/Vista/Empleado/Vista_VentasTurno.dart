@@ -183,76 +183,71 @@ class _VistaVentasturnoState extends State<VistaVentasturno> {
 
                       return Card(
                         margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                        color: const Color.fromARGB(255, 211, 234, 250),
+                        color: Colors.grey[200],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: InkWell(
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context)=>VentanaTicket(venta: venta,)
-                            ));
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => VentanaTicket(
+                                          venta: venta,
+                                        )));
                           },
                           child: SizedBox(
-                            height: 100,
-                            child: Center(
-                              child: venta.desdePedido == true ?
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Pedido ${venta.cliente}',
-                                    style: GoogleFonts.montserrat(fontSize: 23),
-                                  ),
-                                  Text(
-                                    '\$${venta.total.toStringAsFixed(2)}',
-                                    style: GoogleFonts.montserrat(fontSize: 23),
-                                  ),
-                                  Text(
-                                    ff,
-                                    style: GoogleFonts.montserrat(fontSize: 15),
-                                  ),
-                                ],
-                              ):
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '#${venta.IDventa.toString()}',
-                                    style: GoogleFonts.montserrat(fontSize: 23),
-                                  ),
-                                  Text(
-                                    '\$${venta.total.toStringAsFixed(2)}',
-                                    style: GoogleFonts.montserrat(fontSize: 23),
-                                  ),
-                                  Text(
-                                    ff,
-                                    style: GoogleFonts.montserrat(fontSize: 15),
-                                  ),
-                                ],
-                              )
+                              height: 100,
+                              child: Center(
+                                  child: venta.desdePedido == true
+                                      ? Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Pedido ${venta.cliente}',
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 23),
+                                            ),
+                                            Text(
+                                              '\$${venta.total.toStringAsFixed(2)}',
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 23),
+                                            ),
+                                            Text(
+                                              ff,
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 15),
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              '#${venta.IDventa.toString()}',
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 23),
+                                            ),
+                                            Text(
+                                              '\$${venta.total.toStringAsFixed(2)}',
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 23),
+                                            ),
+                                            Text(
+                                              ff,
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 15),
+                                            ),
+                                          ],
+                                        )
 
-                              /*Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '#${venta.IDventa.toString()}',
-                                    style: GoogleFonts.montserrat(fontSize: 23),
-                                  ),
-                                  Text(
-                                    '\$${venta.total.toStringAsFixed(2)}',
-                                    style: GoogleFonts.montserrat(fontSize: 23),
-                                  ),
-                                  Text(
-                                    ff,
-                                    style: GoogleFonts.montserrat(fontSize: 15),
-                                  ),
-                                ],
-                              ),*/
-                            )
-                          ),
+                                  )),
                         ),
                       );
                     },
